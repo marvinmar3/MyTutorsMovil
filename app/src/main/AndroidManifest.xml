@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permisos -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- para usar la camara-->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!--seson de huella para el login-->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+
+    <!--gps/ubicacion-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+     <!-- Configuración de la aplicación -->
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyTutors"
+        tools:targetApi="31">
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyTutors.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!--Login-->
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <!--Register-->
+        <activity
+            android:name=".activities.RegisterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <!--Home-->
+        <activity
+            android:name=".activities.HomeActivity"
+            android:exported="false" />
+        <!--crear tema-->
+        <activity
+            android:name=".activities.CrearTemaActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <!-- detalle tema-->
+        <activity
+            android:name=".activities.DetalleTemaActivity"
+            android:exported="false" />
+        <!-- mis temas-->
+        <activity
+            android:name=".activities.MisTemasActivity"
+            android:exported="false" />
+        <!-- solicitudes-->
+        <activity
+            android:name=".activities.SolicitudesActivity"
+            android:exported="false" />
+        <!-- conversaciones-->
+        <activity
+            android:name=".activities.ConversacionesActivity"
+            android:exported="false" />
+        <!-- chat-->
+        <activity
+            android:name=".activities.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <!-- perfil-->
+        <activity
+            android:name=".activities.PerfilActivity"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.mt.mytutors.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+
+</manifest>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyTutors</string>
+
+    <!-- General -->
+    <string name="loading">Cargando...</string>
+    <string name="error">Error</string>
+    <string name="success">Éxito</string>
+    <string name="cancel">Cancelar</string>
+    <string name="accept">Aceptar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="search">Buscar</string>
+    <string name="back">Volver</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="login_subtitle">Ingresa tus credenciales</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="login">Iniciar Sesión</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="no_account">¿No tienes cuenta?</string>
+    <string name="register_link">Regístrate</string>
+
+    <!-- Register -->
+    <string name="register_title">Crear Cuenta</string>
+    <string name="register_subtitle">Completa tus datos para registrarte</string>
+    <string name="name">Nombre completo</string>
+    <string name="faculty">Facultad</string>
+    <string name="career">Carrera</string>
+    <string name="user_type">Tipo de usuario</string>
+    <string name="student">Alumno</string>
+    <string name="teacher">Profesor</string>
+    <string name="confirm_password">Confirmar contraseña</string>
+    <string name="create_account">Crear Cuenta</string>
+    <string name="have_account">¿Ya tienes cuenta?</string>
+    <string name="login_link">Inicia sesión</string>
+
+    <!-- Home -->
+    <string name="home_title">MyTutors</string>
+    <string name="tab_all">Todos</string>
+    <string name="tab_offers">Ofertas</string>
+    <string name="tab_demands">Demandas</string>
+    <string name="search_topics">Buscar temas...</string>
+    <string name="no_topics">No hay temas disponibles</string>
+    <string name="be_first">¡Sé el primero en crear uno!</string>
+
+    <!-- Crear Tema -->
+    <string name="create_topic">Crear Tema</string>
+    <string name="what_publish">¿Qué quieres publicar?</string>
+    <string name="offer_tutoring">Ofrecer tutoría</string>
+    <string name="find_tutor">Buscar tutor</string>
+    <string name="topic_name">Nombre del tema</string>
+    <string name="description">Descripción</string>
+    <string name="subject">Materia</string>
+    <string name="publish_topic">Publicar Tema</string>
+    <string name="offer_info">Al crear una oferta, otros usuarios podrán solicitar tu tutoría</string>
+    <string name="demand_info">Al crear una demanda, tutores podrán contactarte</string>
+
+    <!-- Detalle Tema -->
+    <string name="topic_detail">Detalle del Tema</string>
+    <string name="offer">OFERTA</string>
+    <string name="demand">DEMANDA</string>
+    <string name="request_tutoring">Solicitar Tutoría</string>
+    <string name="report_topic">Reportar tema</string>
+    <string name="edit_topic">Editar tema</string>
+    <string name="delete_topic">Eliminar tema</string>
+    <string name="tutor">Tutor</string>
+    <string name="tutored">Tutorado</string>
+
+    <!-- Solicitudes -->
+    <string name="requests">Solicitudes</string>
+    <string name="received">Recibidas</string>
+    <string name="sent">Enviadas</string>
+    <string name="pending">Pendiente</string>
+    <string name="accepted">Aceptada</string>
+    <string name="rejected">Rechazada</string>
+    <string name="no_requests">No hay solicitudes</string>
+    <string name="reject">Rechazar</string>
+
+    <!-- Chat -->
+    <string name="messages">Mensajes</string>
+    <string name="write_message">Escribe un mensaje...</string>
+    <string name="send">Enviar</string>
+    <string name="no_messages">No hay mensajes aún</string>
+    <string name="send_first">¡Envía el primer mensaje!</string>
+    <string name="no_conversations">No hay conversaciones</string>
+
+    <!-- Perfil -->
+    <string name="profile">Mi Perfil</string>
+    <string name="my_topics">Mis Temas</string>
+    <string name="logout">Cerrar Sesión</string>
+    <string name="logout_confirm">¿Estás seguro de que quieres cerrar sesión?</string>
+
+    <!-- Navegación -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_my_topics">Mis Temas</string>
+    <string name="nav_requests">Solicitudes</string>
+    <string name="nav_messages">Mensajes</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="nav_logout">Cerrar Sesión</string>
+
+    <!-- Errores -->
+    <string name="error_empty_email">Ingresa tu correo electrónico</string>
+    <string name="error_invalid_email">Correo electrónico inválido</string>
+    <string name="error_empty_password">Ingresa tu contraseña</string>
+    <string name="error_short_password">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_empty_name">Ingresa tu nombre</string>
+    <string name="error_select_faculty">Selecciona una facultad</string>
+    <string name="error_select_career">Selecciona una carrera</string>
+    <string name="error_login">Error al iniciar sesión</string>
+    <string name="error_register">Error al registrarse</string>
+    <string name="error_loading">Error al cargar datos</string>
+    <string name="error_network">Error de conexión</string>
+
+    <!-- Éxitos -->
+    <string name="success_register">Cuenta creada exitosamente</string>
+    <string name="success_topic_created">Tema publicado exitosamente</string>
+    <string name="success_request_sent">Solicitud enviada</string>
+    <string name="success_request_accepted">Solicitud aceptada</string>
+    <string name="success_request_rejected">Solicitud rechazada</string>
+</resources>
