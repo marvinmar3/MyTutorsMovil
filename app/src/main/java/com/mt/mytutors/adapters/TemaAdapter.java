@@ -20,11 +20,18 @@ import java.util.List;
 public class TemaAdapter extends RecyclerView.Adapter<TemaAdapter.TemaViewHolder> {
 
     private List<Tema> temasList;
+
+    public interface OnItemClickListener {
+        void onItemClick(Tema tema);
+        void onEditClick(Tema tema);
+        void onDeleteClick(Tema tema);
+    }
     private OnTemaClickListener listener;
 
     public interface OnTemaClickListener {
         void onTemaClick(Tema tema);
     }
+
 
     public TemaAdapter(List<Tema> temasList, OnTemaClickListener listener) {
         this.temasList = temasList;

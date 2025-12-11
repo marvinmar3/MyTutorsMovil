@@ -23,7 +23,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -63,14 +62,14 @@ public class PerfilActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
 
         initViews();
-        setupToolbar();
-        loadUserProfile();
-        setupListeners();
+        setupToolbar(); // Configurar la toolbar
+        setupListeners(); // Configurar listeners antes de cargar el perfil
+        loadUserProfile(); // Cargar perfil después de configurar listeners
     }
 
     private void initViews() {
         // Corregido: usar el ID correcto del layout
-        ivProfilePhoto = findViewById(R.id.ivFotoPerfil);
+        ivProfilePhoto = findViewById(R.id.ivProfilePhoto);
         tvNombre = findViewById(R.id.tvNombre);
         tvEmail = findViewById(R.id.tvEmail);
         tvUbicacion = findViewById(R.id.tvUbicacion);
@@ -88,8 +87,42 @@ public class PerfilActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Mi Perfil");
         }
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> finish());
+    }
+
+
+    private void setupListeners() {
+        // Verificar que los botones no sean null antes de asignar listeners
+        if (btnCambiarFoto != null) {
+            btnCambiarFoto.setOnClickListener(v -> showPhotoOptions());
+        }
+
+        if (btnObtenerUbicacion != null) {
+            btnObtenerUbicacion.setOnClickListener(v -> getLocation());
+        }
+
+        if (btnCerrarSesion != null) {
+            btnCerrarSesion.setOnClickListener(v -> {
+                mAuth.signOut();
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            });
+        }
+
+        if (btnEditarPerfil != null) {
+            btnEditarPerfil.setOnClickListener(v -> {
+                Toast.makeText(this, "Función en desarrollo", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // CORRECCIÓN: Verificar que ivProfilePhoto no sea null
+        if (ivProfilePhoto != null) {
+            ivProfilePhoto.setOnClickListener(v -> showPhotoOptions());
+        }
     }
 
     private void loadUserProfile() {
@@ -119,10 +152,14 @@ public class PerfilActivity extends AppCompatActivity {
 
                             // Cargar foto desde Base64 (DENTRO del callback)
                             String fotoBase64 = document.getString("fotoBase64");
-                            if (fotoBase64 != null && !fotoBase64.isEmpty()) {
-                                byte[] decodedBytes = Base64.decode(fotoBase64, Base64.DEFAULT);
-                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-                                ivProfilePhoto.setImageBitmap(bitmap);
+                            if (fotoBase64 != null && !fotoBase64.isEmpty() && ivProfilePhoto != null) {
+                                try {
+                                    byte[] decodedBytes = Base64.decode(fotoBase64, Base64.DEFAULT);
+                                    Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                    ivProfilePhoto.setImageBitmap(bitmap);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     })
@@ -133,26 +170,6 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
-
-    private void setupListeners() {
-        btnCambiarFoto.setOnClickListener(v -> showPhotoOptions());
-        btnObtenerUbicacion.setOnClickListener(v -> getLocation());
-
-        btnCerrarSesion.setOnClickListener(v -> {
-            mAuth.signOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
-
-        btnEditarPerfil.setOnClickListener(v -> {
-            // TODO: Implementar edición de perfil
-            Toast.makeText(this, "Función en desarrollo", Toast.LENGTH_SHORT).show();
-        });
-
-        ivProfilePhoto.setOnClickListener(v -> showPhotoOptions());
-    }
 
     private void showPhotoOptions() {
         String[] options = {"📷 Tomar foto", "🖼️ Elegir de galería", "Cancelar"};
