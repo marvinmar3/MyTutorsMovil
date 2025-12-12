@@ -61,6 +61,13 @@ public class PerfilActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         currentUser = mAuth.getCurrentUser();
 
+
+        if (currentUser == null) {
+            Toast.makeText(this, "Sesión expirada", Toast.LENGTH_SHORT).show();
+            goToLogin();
+            return;
+        }
+
         initViews();
         setupToolbar(); // Configurar la toolbar
         setupListeners(); // Configurar listeners antes de cargar el perfil
@@ -81,6 +88,10 @@ public class PerfilActivity extends AppCompatActivity {
         btnEditarPerfil = findViewById(R.id.btnEditarPerfil);
         progressBar = findViewById(R.id.progressBar);
         toolbar = findViewById(R.id.toolbar);
+
+        if (ivProfilePhoto == null) {
+            android.util.Log.e("PerfilActivity", "ERROR: ivProfilePhoto es null. Verificar ID en XML.");
+        }
     }
 
     private void setupToolbar() {
@@ -105,11 +116,15 @@ public class PerfilActivity extends AppCompatActivity {
 
         if (btnCerrarSesion != null) {
             btnCerrarSesion.setOnClickListener(v -> {
-                mAuth.signOut();
-                Intent intent = new Intent(this, LoginActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
+                new AlertDialog.Builder(this)
+                        .setTitle("Cerrar Sesión")
+                        .setMessage("¿Estás seguro de que quieres cerrar sesión?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            mAuth.signOut();
+                            goToLogin();
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
             });
         }
 
@@ -119,57 +134,63 @@ public class PerfilActivity extends AppCompatActivity {
             });
         }
 
-        // CORRECCIÓN: Verificar que ivProfilePhoto no sea null
+        // Permitir cambiar foto tocando la imagen
         if (ivProfilePhoto != null) {
             ivProfilePhoto.setOnClickListener(v -> showPhotoOptions());
         }
     }
 
     private void loadUserProfile() {
-        if (currentUser != null) {
-            progressBar.setVisibility(View.VISIBLE);
-            tvEmail.setText(currentUser.getEmail());
+        if (currentUser == null) return;
 
-            db.collection("usuarios").document(currentUser.getUid())
-                    .get()
-                    .addOnSuccessListener(document -> {
-                        progressBar.setVisibility(View.GONE);
-                        if (document.exists()) {
-                            String nombre = document.getString("nombre");
-                            String ubicacion = document.getString("ubicacion");
-                            String rol = document.getString("rol");
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        if (tvEmail != null) tvEmail.setText(currentUser.getEmail());
 
-                            if (nombre != null) tvNombre.setText(nombre);
-                            if (ubicacion != null) tvUbicacion.setText("📍 " + ubicacion);
-                            if (rol != null) tvRol.setText(rol);
+        db.collection("usuarios").document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
 
-                            // Fecha de registro
-                            if (document.getTimestamp("fechaRegistro") != null) {
-                                Date fecha = document.getTimestamp("fechaRegistro").toDate();
-                                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-                                tvFechaRegistro.setText(sdf.format(fecha));
-                            }
+                    if (document.exists()) {
+                        String nombre = document.getString("nombre");
+                        String ubicacion = document.getString("ubicacion");
+                        String rol = document.getString("rol");
 
-                            // Cargar foto desde Base64 (DENTRO del callback)
-                            String fotoBase64 = document.getString("fotoBase64");
-                            if (fotoBase64 != null && !fotoBase64.isEmpty() && ivProfilePhoto != null) {
-                                try {
-                                    byte[] decodedBytes = Base64.decode(fotoBase64, Base64.DEFAULT);
-                                    Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-                                    ivProfilePhoto.setImageBitmap(bitmap);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                        if (nombre != null && tvNombre != null) {
+                            tvNombre.setText(nombre);
+                        }
+                        if (ubicacion != null && tvUbicacion != null) {
+                            tvUbicacion.setText("📍 " + ubicacion);
+                        }
+                        if (rol != null && tvRol != null) {
+                            tvRol.setText(rol);
+                        }
+
+                        // Fecha de registro
+                        if (document.getTimestamp("fechaRegistro") != null && tvFechaRegistro != null) {
+                            Date fecha = document.getTimestamp("fechaRegistro").toDate();
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                            tvFechaRegistro.setText(sdf.format(fecha));
+                        }
+
+                        // Cargar foto desde Base64
+                        String fotoBase64 = document.getString("fotoBase64");
+                        if (fotoBase64 != null && !fotoBase64.isEmpty() && ivProfilePhoto != null) {
+                            try {
+                                byte[] decodedBytes = Base64.decode(fotoBase64, Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                ivProfilePhoto.setImageBitmap(bitmap);
+                            } catch (Exception e) {
+                                android.util.Log.e("PerfilActivity", "Error al decodificar imagen: " + e.getMessage());
                             }
                         }
-                    })
-                    .addOnFailureListener(e -> {
-                        progressBar.setVisibility(View.GONE);
-                        Toast.makeText(this, "Error al cargar perfil", Toast.LENGTH_SHORT).show();
-                    });
-        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Error al cargar perfil", Toast.LENGTH_SHORT).show();
+                });
     }
-
 
     private void showPhotoOptions() {
         String[] options = {"📷 Tomar foto", "🖼️ Elegir de galería", "Cancelar"};
@@ -178,12 +199,12 @@ public class PerfilActivity extends AppCompatActivity {
                 .setTitle("Cambiar foto de perfil")
                 .setItems(options, (dialog, which) -> {
                     switch (which) {
-                        case 0:
+                        case 0: // Cámara
                             if (CameraHelper.checkCameraPermission(this)) {
                                 CameraHelper.openCamera(this);
                             }
                             break;
-                        case 1:
+                        case 1: // Galería
                             CameraHelper.openGallery(this);
                             break;
                     }
@@ -213,14 +234,11 @@ public class PerfilActivity extends AppCompatActivity {
     }
 
     private void uploadPhotoToFirebase(Uri photoUri) {
-        progressBar.setVisibility(View.VISIBLE);
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         Toast.makeText(this, "Procesando foto...", Toast.LENGTH_SHORT).show();
 
         try {
-            // Convertir imagen a Base64
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), photoUri);
-
-            // Reducir tamaño para no exceder límite de Firestore (1MB por documento)
             Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 200, 200, true);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -228,21 +246,25 @@ public class PerfilActivity extends AppCompatActivity {
             byte[] imageBytes = baos.toByteArray();
             String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
-            // Guardar en Firestore (no necesita Storage)
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("fotoBase64", base64Image);
+
             db.collection("usuarios").document(currentUser.getUid())
-                    .set(Map.of("fotoBase64", base64Image), SetOptions.merge())
+                    .set(updates, SetOptions.merge())
                     .addOnSuccessListener(aVoid -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         Toast.makeText(this, "✓ Foto actualizada", Toast.LENGTH_SHORT).show();
-                        ivProfilePhoto.setImageBitmap(scaled);
+                        if (ivProfilePhoto != null) {
+                            ivProfilePhoto.setImageBitmap(scaled);
+                        }
                     })
                     .addOnFailureListener(e -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
 
         } catch (IOException e) {
-            progressBar.setVisibility(View.GONE);
+            if (progressBar != null) progressBar.setVisibility(View.GONE);
             Toast.makeText(this, "Error al procesar imagen", Toast.LENGTH_SHORT).show();
         }
     }
@@ -283,8 +305,8 @@ public class PerfilActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(android.view.View.GONE);
-                    btnObtenerUbicacion.setEnabled(true);
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    if (btnObtenerUbicacion != null) btnObtenerUbicacion.setEnabled(true);
                     Toast.makeText(PerfilActivity.this, error, Toast.LENGTH_SHORT).show();
                 });
             }
@@ -302,6 +324,15 @@ public class PerfilActivity extends AppCompatActivity {
             } else if (requestCode == LocationHelper.PERMISSION_LOCATION) {
                 getLocation();
             }
+        } else {
+            Toast.makeText(this, "Permiso denegado", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void goToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }

@@ -42,6 +42,8 @@ public class LoginActivity extends AppCompatActivity {
     private static final String KEY_BIOMETRIC_ENABLED = "biometric_enabled";
     private static final String KEY_USER_EMAIL = "user_email";
 
+    private boolean skipAutoLogin = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,10 +68,13 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Verificar si ya hay sesión activa
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            goToHome();
+        if (!skipAutoLogin) {
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            boolean biometricEnabled = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false);
+
+            if (currentUser != null && !biometricEnabled) {
+                goToHome();  // Solo si NO tiene biometría
+            }
         }
     }
 
