@@ -96,32 +96,65 @@ public class MisTemasActivity extends AppCompatActivity implements TemaAdapter.O
 
         showLoading(true);
 
-        // Buscar temas donde el creador sea el usuario actual
+        // Intentar primero CON ordenamiento (si existe el índice)
         db.collection("temas")
                 .whereEqualTo("idCreador", currentUserId)
                 .orderBy("fechaCreacion", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    showLoading(false);
-                    temasList.clear();
-
-                    for (QueryDocumentSnapshot document : querySnapshot) {
-                        Tema tema = document.toObject(Tema.class);
-                        tema.setId(document.getId());
-                        temasList.add(tema);
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        // Si falla por índice, cargar sin ordenar
+                        android.util.Log.w("MisTemas", "Error con índice, cargando sin ordenar", error);
+                        loadMisTemasSimple();
+                        return;
                     }
 
-                    temaAdapter.notifyItemRangeInserted(0, temasList.size());
-                    updateEmptyState();
-                })
-                .addOnFailureListener(e -> {
                     showLoading(false);
-                    Toast.makeText(this, "Error al cargar temas: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                    updateEmptyState();
+                    procesarResultados(value);
+                });
+    }
+    // Método alternativo sin ordenamiento (funciona siempre)
+    private void loadMisTemasSimple() {
+        db.collection("temas")
+                .whereEqualTo("idCreador", currentUserId)
+                .addSnapshotListener((value, error) -> {
+                    showLoading(false);
+
+                    if (error != null) {
+                        Toast.makeText(this, "Error: " + error.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                        updateEmptyState();
+                        return;
+                    }
+
+                    procesarResultados(value);
                 });
     }
 
+    // Método único para procesar resultados
+    private void procesarResultados(com.google.firebase.firestore.QuerySnapshot value) {
+        temasList.clear();
+
+        if (value != null && !value.isEmpty()) {
+            for (com.google.firebase.firestore.QueryDocumentSnapshot document : value) {
+                Tema tema = document.toObject(Tema.class);
+                tema.setId(document.getId());
+                temasList.add(tema);
+
+                // Log para debug
+                android.util.Log.d("MisTemas", "Tema cargado: " + tema.getNombre() +
+                        " - Rol: " + tema.getRol());
+            }
+        }
+
+        temaAdapter.notifyDataSetChanged();
+        updateEmptyState();
+
+        // Mensaje informativo
+        if (temasList.isEmpty()) {
+            Toast.makeText(this, "No has creado ningún tema todavía",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
     private void updateEmptyState() {
         if (temasList.isEmpty()) {
             rvTemas.setVisibility(View.GONE);

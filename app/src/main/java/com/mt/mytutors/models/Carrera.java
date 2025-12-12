@@ -44,4 +44,9 @@ public class Carrera implements Serializable{
     public void setIdFacultad(String idFacultad) {
         this.idFacultad = idFacultad;
     }
+
+    @Override
+    public String toString() {
+        return nombre != null ? nombre: "Sin nombre";
+    }
 }

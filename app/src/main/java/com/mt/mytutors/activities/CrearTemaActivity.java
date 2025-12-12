@@ -27,7 +27,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CrearTemaActivity extends AppCompatActivity {
 
@@ -147,17 +149,18 @@ public class CrearTemaActivity extends AppCompatActivity {
 
         showLoading(true);
 
-        // Crear el tema
-        Tema tema = new Tema();
-        tema.setNombre(nombre);
-        tema.setDescripcion(descripcion);
-        tema.setRol(rol);
-        tema.setIdMateria(materiaSeleccionada.getId());
-        tema.setIdCreador(currentUser.getUid());
-        tema.setNombreMateria(materiaSeleccionada.getNombre());
+        // IMPORTANTE: Usar Map para incluir TODOS los campos incluyendo timestamp
+        Map<String, Object> temaData = new HashMap<>();
+        temaData.put("nombre", nombre);
+        temaData.put("descripcion", descripcion);
+        temaData.put("rol", rol);
+        temaData.put("idMateria", materiaSeleccionada.getId());
+        temaData.put("idCreador", currentUser.getUid());
+        temaData.put("nombreMateria", materiaSeleccionada.getNombre());
+        temaData.put("fechaCreacion", com.google.firebase.Timestamp.now()); // ← CRÍTICO
 
         if ("tutor".equals(rol)) {
-            tema.setIdTutor(currentUser.getUid());
+            temaData.put("idTutor", currentUser.getUid());
         }
 
         // Obtener nombre del creador
@@ -166,29 +169,30 @@ public class CrearTemaActivity extends AppCompatActivity {
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         String nombreCreador = documentSnapshot.getString("nombre");
-                        tema.setNombreCreador(nombreCreador);
+                        temaData.put("nombreCreador", nombreCreador);
                     }
 
-                    // Guardar en Firestore
+                    // Guardar en Firestore con TODOS los campos
                     db.collection("temas")
-                            .add(tema)
+                            .add(temaData)
                             .addOnSuccessListener(documentReference -> {
                                 showLoading(false);
-                                Toast.makeText(this, getString(R.string.success_topic_created),
+                                Toast.makeText(this, "✅ " + getString(R.string.success_topic_created),
                                         Toast.LENGTH_SHORT).show();
                                 finish();
                             })
                             .addOnFailureListener(e -> {
                                 showLoading(false);
-                                Toast.makeText(this, "Error al crear el tema", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "❌ Error: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
-                    Toast.makeText(this, "Error al obtener datos del usuario", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error al obtener datos del usuario",
+                            Toast.LENGTH_SHORT).show();
                 });
     }
-
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         btnCrear.setVisibility(show ? View.INVISIBLE : View.VISIBLE);

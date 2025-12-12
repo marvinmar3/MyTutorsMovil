@@ -29,7 +29,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * RegisterActivity - Pantalla de registro de nuevos usuarios
@@ -178,20 +180,24 @@ public class RegisterActivity extends AppCompatActivity {
         // Botón volver
         btnBack.setOnClickListener(v -> finish());
 
-        // Cambio de facultad
+        // Cambio de facultad carga carreras
         spFacultad.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
+                if (position > 0) { // Si no es "Selecciona una facultad"
                     Facultad facultad = facultades.get(position);
                     loadCarreras(facultad.getId());
                 } else {
-                    loadCarreras(null);
+                    carreras.clear();
+                    carreras.add(new Carrera("", "Selecciona una carrera", ""));
+                    carreraAdapter.notifyDataSetChanged();
                 }
             }
 
             @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                // No hacer nada
+            }
         });
 
         // Botón registrar
@@ -223,19 +229,28 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         // Obtener selecciones
+        if (spFacultad.getSelectedItemPosition() == 0) {
+            Toast.makeText(this, "⚠️ " + getString(R.string.error_select_faculty),
+                    Toast.LENGTH_LONG).show();
+            spFacultad.requestFocus();
+            return;
+        }
+
+        if (spCarrera.getSelectedItemPosition() == 0) {
+            Toast.makeText(this, "⚠️ " + getString(R.string.error_select_career),
+                    Toast.LENGTH_LONG).show();
+            spCarrera.requestFocus();
+            return;
+        }
+
         Facultad facultad = (Facultad) spFacultad.getSelectedItem();
         Carrera carrera = (Carrera) spCarrera.getSelectedItem();
         String tipoUsuario = rbAlumno.isChecked() ? "alumno" : "profesor";
 
-        // Validar selecciones
-        if (spFacultad.getSelectedItemPosition() == 0) {
-            Toast.makeText(this, getString(R.string.error_select_faculty), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (spCarrera.getSelectedItemPosition() == 0) {
-            Toast.makeText(this, getString(R.string.error_select_career), Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Log para debug
+        android.util.Log.d("Register", "Facultad: " + facultad.getNombre());
+        android.util.Log.d("Register", "Carrera: " + carrera.getNombre());
+        android.util.Log.d("Register", "Tipo: " + tipoUsuario);
 
         // Mostrar loading
         showLoading(true);
@@ -246,7 +261,6 @@ public class RegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            // Crear documento de usuario en Firestore
                             saveUserToFirestore(firebaseUser.getUid(), nombre, email,
                                     facultad.getId(), carrera.getId(), tipoUsuario);
                         }
@@ -254,43 +268,51 @@ public class RegisterActivity extends AppCompatActivity {
                         showLoading(false);
                         String errorMessage = "Error al crear cuenta";
                         if (task.getException() != null && task.getException().getMessage() != null) {
-                            if (task.getException().getMessage().contains("email")) {
+                            String error = task.getException().getMessage();
+                            if (error.contains("email")) {
                                 errorMessage = "El correo ya está registrado";
+                            } else if (error.contains("password")) {
+                                errorMessage = "La contraseña debe tener al menos 6 caracteres";
                             }
                         }
-                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "❌ " + errorMessage, Toast.LENGTH_LONG).show();
                     }
                 });
     }
-
     /**
      * Guarda el usuario en Firestore
      */
     private void saveUserToFirestore(String uid, String nombre, String email,
                                      String idFacultad, String idCarrera, String tipoUsuario) {
-        Usuario usuario = new Usuario();
-        usuario.setId(uid);
-        usuario.setNombre(nombre);
-        usuario.setCorreo(email);
-        usuario.setIdFacultad(idFacultad);
-        usuario.setIdCarrera(idCarrera);
-        usuario.setTipoUsuario(tipoUsuario);
-        usuario.setActivo(true);
+
+        // Crear Map con TODOS los campos necesarios
+        Map<String, Object> usuarioData = new HashMap<>();
+        usuarioData.put("id", uid);
+        usuarioData.put("nombre", nombre);
+        usuarioData.put("correo", email);
+        usuarioData.put("idFacultad", idFacultad);
+        usuarioData.put("idCarrera", idCarrera);
+        usuarioData.put("tipoUsuario", tipoUsuario); // alumno o profesor
+        usuarioData.put("rolEnApp", ""); // Se definirá al crear primer tema
+        usuarioData.put("activo", true);
+        usuarioData.put("fechaRegistro", com.google.firebase.Timestamp.now());
+        usuarioData.put("conversacionesIds", new ArrayList<String>());
 
         db.collection("usuarios")
                 .document(uid)
-                .set(usuario)
+                .set(usuarioData)
                 .addOnSuccessListener(aVoid -> {
                     showLoading(false);
-                    Toast.makeText(this, getString(R.string.success_register), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "✅ " + getString(R.string.success_register),
+                            Toast.LENGTH_SHORT).show();
                     goToHome();
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
-                    Toast.makeText(this, "Error al guardar datos del usuario", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "❌ Error al guardar datos: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
     }
-
     /**
      * Valida los campos del formulario
      */

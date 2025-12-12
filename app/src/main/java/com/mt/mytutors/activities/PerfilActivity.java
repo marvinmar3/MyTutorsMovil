@@ -154,16 +154,38 @@ public class PerfilActivity extends AppCompatActivity {
                     if (document.exists()) {
                         String nombre = document.getString("nombre");
                         String ubicacion = document.getString("ubicacion");
-                        String rol = document.getString("rol");
+                        String tipoUsuario = document.getString("tipoUsuario"); // ← alumno/profesor
+                        String rolEnApp = document.getString("rolEnApp"); // ← tutor/tutorado
 
                         if (nombre != null && tvNombre != null) {
                             tvNombre.setText(nombre);
                         }
+
                         if (ubicacion != null && tvUbicacion != null) {
                             tvUbicacion.setText("📍 " + ubicacion);
                         }
-                        if (rol != null && tvRol != null) {
-                            tvRol.setText(rol);
+
+                        // MOSTRAR ROL CORRECTAMENTE
+                        if (tvRol != null) {
+                            String rolTexto = "";
+
+                            // Primero mostrar tipo de usuario
+                            if (tipoUsuario != null) {
+                                rolTexto = tipoUsuario.equals("alumno") ? "Alumno" : "Profesor";
+                            }
+
+                            // Agregar rol en app si existe
+                            if (rolEnApp != null && !rolEnApp.isEmpty()) {
+                                String rolApp = rolEnApp.equals("tutor") ? "Tutor" : "Tutorado";
+                                rolTexto = rolTexto.isEmpty() ? rolApp : rolTexto + " • " + rolApp;
+                            }
+
+                            // Si no hay ningún rol, mostrar "Usuario"
+                            if (rolTexto.isEmpty()) {
+                                rolTexto = "Usuario";
+                            }
+
+                            tvRol.setText(rolTexto);
                         }
 
                         // Fecha de registro
@@ -191,7 +213,6 @@ public class PerfilActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error al cargar perfil", Toast.LENGTH_SHORT).show();
                 });
     }
-
     private void showPhotoOptions() {
         String[] options = {"📷 Tomar foto", "🖼️ Elegir de galería", "Cancelar"};
 

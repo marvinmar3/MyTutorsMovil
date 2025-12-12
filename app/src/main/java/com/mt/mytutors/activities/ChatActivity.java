@@ -6,6 +6,7 @@ import android.view.View; // para manejar las vistas
 import android.widget.LinearLayout;// para manejar diseños lineales
 import android.widget.ProgressBar;
 import android.widget.TextView; // para manejar los elementos de texto
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -28,8 +29,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -119,28 +122,38 @@ public class ChatActivity extends AppCompatActivity {
                 .whereArrayContains("participantes", currentUserId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    boolean encontrada = false;
+
                     for (var doc : querySnapshot) {
                         List<String> participantes = (List<String>) doc.get("participantes");
-                        if (participantes != null && participantes.contains(otroUsuarioId)) {
+                        if (participantes != null &&
+                                participantes.contains(otroUsuarioId) &&
+                                participantes.size() == 2) {
                             conversacionId = doc.getId();
+                            encontrada = true;
                             loadMensajes();
-                            return;
+                            break;
                         }
                     }
-                    // No existe, crear nueva
-                    crearConversacion();
+
+                    if (!encontrada) {
+                        crearConversacion();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void crearConversacion() {
-        Conversacion conversacion = new Conversacion();
-        conversacion.setNombre("Chat - " + temaNombre);
-        conversacion.setTipo("privada");
-        conversacion.setIdTema(temaId);
-        conversacion.setParticipantes(Arrays.asList(currentUserId, otroUsuarioId));
+        Map<String, Object> conversacion = new HashMap<>();
+        conversacion.put("nombre", "Chat - " + temaNombre);
+        conversacion.put("tipo", "privada");
+        conversacion.put("idTema", temaId);
+        conversacion.put("participantes", Arrays.asList(currentUserId, otroUsuarioId));
+        conversacion.put("fechaUltimoMensaje", null);
+        conversacion.put("ultimoMensaje", "");
 
         db.collection("conversaciones")
                 .add(conversacion)
@@ -148,26 +161,50 @@ public class ChatActivity extends AppCompatActivity {
                     conversacionId = documentReference.getId();
                     showLoading(false);
                     updateEmptyState();
+
+                    // Mostrar mensaje de ayuda
+                    Toast.makeText(this, "Conversación creada. ¡Envía el primer mensaje!",
+                            Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> showLoading(false));
+                .addOnFailureListener(e -> {
+                    showLoading(false);
+                    Toast.makeText(this, "Error al crear conversación: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void loadMensajes() {
+        if (conversacionId == null) {
+            showLoading(false);
+            updateEmptyState();
+            return;
+        }
+
         db.collection("mensajes")
                 .whereEqualTo("idConversacion", conversacionId)
                 .orderBy("fechaEnvio", Query.Direction.ASCENDING)
                 .addSnapshotListener((value, error) -> {
                     showLoading(false);
 
-                    if (error != null || value == null) return;
+                    if (error != null) {
+                        Toast.makeText(this, "Error al cargar mensajes", Toast.LENGTH_SHORT).show();
+                        updateEmptyState();
+                        return;
+                    }
 
-                    //limpiar lista para evitar duplicados
+                    if (value == null) {
+                        updateEmptyState();
+                        return;
+                    }
+
                     mensajes.clear();
 
                     for (var doc: value.getDocuments()){
                         Mensaje mensaje = doc.toObject(Mensaje.class);
-                        mensaje.setId(doc.getId());
-                        mensajes.add(mensaje);
+                        if (mensaje != null) {
+                            mensaje.setId(doc.getId());
+                            mensajes.add(mensaje);
+                        }
                     }
 
                     mensajeAdapter.notifyDataSetChanged();
@@ -177,7 +214,6 @@ public class ChatActivity extends AppCompatActivity {
                     updateEmptyState();
                 });
     }
-
     private void enviarMensaje() {
         String contenido = etMensaje.getText() != null ?
                 etMensaje.getText().toString().trim() : "";
