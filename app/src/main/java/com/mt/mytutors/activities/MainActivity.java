@@ -1,6 +1,7 @@
 package com.mt.mytutors.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.mt.mytutors.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.mt.mytutors.utils.BiometricHelper;
 
 /**
  * MainActivity - Pantalla de Splash y verificación de sesión
@@ -53,8 +55,41 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent;
         if (currentUser != null) {
-            // Usuario autenticado, ir a Home
-            intent = new Intent(this, HomeActivity.class);
+            // Usuario autenticado: verificar si se desea autenticación biométrica
+            SharedPreferences prefs = getSharedPreferences("MyTutorsPrefs", MODE_PRIVATE);
+            boolean biometricEnabled = prefs.getBoolean("biometric_enabled", false);
+
+            if (biometricEnabled) {
+                // Mostrar prompt biométrico primero; si tiene éxito, ir a Home, si no, ir a Login
+                BiometricHelper.authenticate(this, new BiometricHelper.BiometricCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Intent i = new Intent(MainActivity.this, HomeActivity.class);
+                        startActivity(i);
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        // Si hay un error con la biometría, enviar al login para ingresar con contraseña
+                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(i);
+                        finish();
+                    }
+
+                    @Override
+                    public void onFailed() {
+                        // En caso de fallo (huella no reconocida), ir al Login
+                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(i);
+                        finish();
+                    }
+                });
+                return; // Ya iniciamos el flujo biométrico asíncrono
+            } else {
+                // No hay biometría configurada, ir directo a Home
+                intent = new Intent(this, HomeActivity.class);
+            }
         } else {
             // No hay sesión, ir a Login
             intent = new Intent(this, LoginActivity.class);

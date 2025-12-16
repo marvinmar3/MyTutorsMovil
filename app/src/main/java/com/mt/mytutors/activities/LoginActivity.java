@@ -42,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String KEY_BIOMETRIC_ENABLED = "biometric_enabled";
     private static final String KEY_USER_EMAIL = "user_email";
 
-    private boolean skipAutoLogin = false;
+    private final boolean skipAutoLogin = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,8 +72,20 @@ public class LoginActivity extends AppCompatActivity {
             FirebaseUser currentUser = mAuth.getCurrentUser();
             boolean biometricEnabled = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false);
 
-            if (currentUser != null && !biometricEnabled) {
-                goToHome();  // Solo si NO tiene biometría
+            // Si hay un usuario ya logueado, decidir si saltar al Home o pedir biometría
+            if (currentUser != null) {
+                if (biometricEnabled) {
+                    // Si la biometría está activada en prefs, pedir autenticación
+                    if (BiometricHelper.isBiometricAvailable(this)) {
+                        attemptBiometricLogin();
+                    } else {
+                        // Si el dispositivo no soporta biometría, seguir al Home
+                        goToHome();
+                    }
+                } else {
+                    // Comportamiento previo: si NO hay biometría configurada, entrar directo
+                    goToHome();
+                }
             }
         }
     }
@@ -128,7 +140,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // Link a recuperar contraseña
         tvForgotPassword.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
+            CharSequence emailCs = etEmail.getText();
+            String email = emailCs != null ? emailCs.toString().trim() : "";
             if (!TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 sendPasswordResetEmail(email);
             } else {
@@ -172,9 +185,11 @@ public class LoginActivity extends AppCompatActivity {
         tilEmail.setError(null);
         tilPassword.setError(null);
 
-        // Obtener valores
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        // Obtener valores (comprobando null para evitar NPE)
+        CharSequence emailCs = etEmail.getText();
+        CharSequence passwordCs = etPassword.getText();
+        String email = emailCs != null ? emailCs.toString().trim() : "";
+        String password = passwordCs != null ? passwordCs.toString().trim() : "";
 
         // Validar campos
         if (!validateFields(email, password)) {
